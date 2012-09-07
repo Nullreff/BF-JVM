@@ -32,8 +32,7 @@
     ; Increment the byte at the pointer
     aload_2
     iload_1
-    aload_2
-    iload_1
+    dup2
     iaload
     bipush 1
     iadd
@@ -43,8 +42,7 @@
     ; Decrement the byte at the pointer
     aload_2
     iload_1
-    aload_2
-    iload_1
+    dup2
     iaload
     bipush -1
     iadd
