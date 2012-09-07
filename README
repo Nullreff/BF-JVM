@@ -1,0 +1,1 @@
+Brainfuck compiler written in Haskell that targets the JVM.  Generates JVM assembler code that can be run through Jasmin (http://jasmin.sourceforge.net/) to create class files.
