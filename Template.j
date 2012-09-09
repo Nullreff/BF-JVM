@@ -65,20 +65,22 @@
     i2c
     invokevirtual java/io/PrintStream/print(C)V
 
+    ; [
+    ; Start loop: Execute delimited code until the byte at the pointer equals zero
+loopStart:
+    aload_2
+    iload_1
+    iaload
+    ; Jump 2 + instruction count
+    ifeq loopEnd
+
+    ; Loop Code goes here
+
+    ; ]
+    ; End loop: Jump back to the matching [
+    ; Jump -1 - instruction count
+    goto loopStart
+loopEnd:
+
     return 
 .end method
-
-;;; Instructions ;;;
-;    ; [
-;    ; Start loop: Execute delimited code until the byte at the pointer equals zero
-;    aload_2
-;    iload_1
-;    iaload
-;    ifeq 2
-;
-;    ; ]
-;    ; End loop: Jump back to the matching [
-;
-;    ; #
-;    ; Dump the values of a[0] thru a[9] to the console. 
-;
