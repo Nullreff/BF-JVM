@@ -25,6 +25,9 @@ push = State $ inc
         inc (x:xs) = (show (x + 1), (x + 1):x:xs)
         inc [] = (show 0, [0])
 
+evalStack :: State LabelStack [String] -> [String]
+evalStack stack = (evalState stack) []
+
 main = do
     args <- getArgs 
     let inputName = head args
@@ -36,8 +39,8 @@ main = do
 parseBF :: String -> String
 parseBF input = 
     let tokens = catMaybes $ map getBFToken input
-        code   = evalState $ mapM tokenToCode tokens 
-    in unlines (code [])
+        code   = evalStack $ mapM tokenToCode tokens 
+    in unlines code 
 
 tokenToCode :: BFToken -> State LabelStack String
 tokenToCode BFLeft      = return "iinc 1 -1\n"
