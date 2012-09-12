@@ -1,5 +1,6 @@
 import Control.Monad.State
 import System.Environment
+import System.FilePath
 import System.IO
 import Data.List
 import Data.Maybe
@@ -31,9 +32,10 @@ evalStack stack = (evalState stack) []
 main = do
     args <- getArgs 
     let inputName = head args
-        outputName = "TestOut.j"
+        name = dropExtension inputName
+        outputName = name ++ ".j"
     inputData <- readFile inputName
-    let outputData = generateTemplate "TestOut" $ parseBF inputData
+    let outputData = generateTemplate name $ parseBF inputData
     writeFile outputName outputData
 
 parseBF :: String -> String
