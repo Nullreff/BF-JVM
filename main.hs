@@ -5,10 +5,8 @@ import System.IO
 import Data.List
 import Data.Maybe
 
-data BFToken = BFLeft
-             | BFRight
-             | BFAdd
-             | BFSub
+data BFToken = BFMove Int
+             | BFInc Int
              | BFOut
              | BFIn
              | BFLoopStart
@@ -45,23 +43,13 @@ parseBF input =
     in unlines code 
 
 tokenToCode :: BFToken -> State LabelStack String
-tokenToCode BFLeft      = return "iinc 1 -1\n"
-tokenToCode BFRight     = return "iinc 1 1\n"
-tokenToCode BFAdd       = return $ unlines
+tokenToCode (BFMove c)    = return $ "iinc 1 " ++ (show c) ++ "\n"
+tokenToCode (BFInc c)     = return $ unlines
     [ "aload_2"
     , "iload_1"
     , "dup2"
     , "iaload"
-    , "bipush 1"
-    , "iadd"
-    , "iastore "
-    ]
-tokenToCode BFSub       = return $ unlines
-    [ "aload_2"
-    , "iload_1"
-    , "dup2"
-    , "iaload"
-    , "bipush -1"
+    , "bipush " ++ (show c)
     , "iadd"
     , "iastore "
     ]
@@ -97,10 +85,10 @@ tokenToCode BFLoopEnd   = do
         ]
 
 getBFToken :: Char -> Maybe BFToken
-getBFToken '<' = Just BFLeft
-getBFToken '>' = Just BFRight
-getBFToken '+' = Just BFAdd
-getBFToken '-' = Just BFSub
+getBFToken '<' = Just $ BFMove (-1)
+getBFToken '>' = Just $ BFMove 1
+getBFToken '+' = Just $ BFInc 1
+getBFToken '-' = Just $ BFInc (-1)
 getBFToken '.' = Just BFOut
 getBFToken ',' = Just BFIn
 getBFToken '[' = Just BFLoopStart
