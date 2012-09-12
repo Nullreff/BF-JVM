@@ -2,6 +2,7 @@ import Control.Monad.State
 import System.Environment
 import System.IO
 import Data.List
+import Data.Maybe
 
 data BFToken = BFLeft
              | BFRight
@@ -13,13 +14,16 @@ data BFToken = BFLeft
              | BFLoopEnd
              deriving (Show)
 
-type LabelStack = [String] 
+type LabelStack = [Int] 
 
 pop :: State LabelStack String 
-pop = State $ \(x:xs) -> (x, xs)
+pop = State $ \(x:xs) -> (show x, xs)
 
-push :: String -> State LabelStack ()
-push a = State $ \xs -> ((), a:xs)
+push :: State LabelStack String 
+push = State $ inc
+    where 
+        inc (x:xs) = (show (x + 1), (x + 1):x:xs)
+        inc [] = (show 0, [0])
 
 main = do
     args <- getArgs 
@@ -30,19 +34,73 @@ main = do
     writeFile outputName outputData
 
 parseBF :: String -> String
-parseBF input = ""
+parseBF input = 
+    let tokens = catMaybes $ map getBFToken input
+        code   = evalState $ mapM tokenToCode tokens 
+    in unlines (code [])
 
-tokenToCode :: State LabelStack ()
+tokenToCode :: BFToken -> State LabelStack String
+tokenToCode BFLeft      = return "iinc 1 -1\n"
+tokenToCode BFRight     = return "iinc 1 1\n"
+tokenToCode BFAdd       = return $ unlines
+    [ "aload_2"
+    , "iload_1"
+    , "dup2"
+    , "iaload"
+    , "bipush 1"
+    , "iadd"
+    , "iastore "
+    ]
+tokenToCode BFSub       = return $ unlines
+    [ "aload_2"
+    , "iload_1"
+    , "dup2"
+    , "iaload"
+    , "bipush -1"
+    , "iadd"
+    , "iastore "
+    ]
+tokenToCode BFOut       = return $ unlines
+    [ "getstatic java/lang/System/out Ljava/io/PrintStream;"
+    , "aload_2"
+    , "iload_1"
+    , "iaload"
+    , "i2c"
+    , "invokevirtual java/io/PrintStream/print(C)V"
+    ]
+tokenToCode BFIn        = return $ unlines
+    [ "aload_2"
+    , "iload_1"
+    , "getstatic java/lang/System/in Ljava/io/InputStream;"
+    , "invokevirtual java/io/InputStream/read()I"
+    , "iastore "
+    ]
+tokenToCode BFLoopStart = do
+    current <- push
+    return $ unlines
+        [ "loop" ++ current ++ "Start:"
+        , "aload_2"
+        , "iload_1"
+        , "iaload"
+        , "ifeq loop" ++ current ++ "End"
+        ]
+tokenToCode BFLoopEnd   = do
+    current <- pop
+    return $ unlines
+        [ "goto loop" ++ current ++ "Start"
+        , "loop" ++ current ++ "End:"
+        ]
 
-getBFToken :: Char -> BFToken
-getBFToken '<' = BFLeft
-getBFToken '>' = BFRight
-getBFToken '+' = BFAdd
-getBFToken '-' = BFSub
-getBFToken '.' = BFOut
-getBFToken ',' = BFIn
-getBFToken '[' = BFLoopStart
-getBFToken ']' = BFLoopEnd
+getBFToken :: Char -> Maybe BFToken
+getBFToken '<' = Just BFLeft
+getBFToken '>' = Just BFRight
+getBFToken '+' = Just BFAdd
+getBFToken '-' = Just BFSub
+getBFToken '.' = Just BFOut
+getBFToken ',' = Just BFIn
+getBFToken '[' = Just BFLoopStart
+getBFToken ']' = Just BFLoopEnd
+getBFToken _   = Nothing 
 
 generateTemplate :: String -> String -> String
 generateTemplate name body = unlines 
@@ -73,71 +131,3 @@ generateTemplate name body = unlines
     , "    return "
     , ".end method"
     ]
-
-{-- 
-
-    ; >
-    ; Increment the pointer
-    iinc 1 1
-
-    ; <
-    ; Decrement the pointer
-    iinc 1 -1
-
-    ; +
-    ; Increment the byte at the pointer
-    aload_2
-    iload_1
-    dup2
-    iaload
-    bipush 1
-    iadd
-    iastore 
-
-    ; -
-    ; Decrement the byte at the pointer
-    aload_2
-    iload_1
-    dup2
-    iaload
-    bipush -1
-    iadd
-    iastore 
-
-    ; ,
-    ; Input a byte and store it in the byte at the pointer
-    aload_2
-    iload_1
-    getstatic java/lang/System/in Ljava/io/InputStream;
-    invokevirtual java/io/InputStream/read()I
-    iastore 
-
-    ; .
-    ; Output the byte at the pointer
-    getstatic java/lang/System/out Ljava/io/PrintStream;
-    aload_2
-    iload_1
-    iaload
-    i2c
-    invokevirtual java/io/PrintStream/print(C)V
-
-    ; [
-    ; Start loop: Execute delimited code until the byte at the pointer equals zero
-loopStart:
-    aload_2
-    iload_1
-    iaload
-    ; Jump 2 + instruction count
-    ifeq loopEnd
-
-    ; Loop Code goes here
-
-    ; ]
-    ; End loop: Jump back to the matching [
-    ; Jump -1 - instruction count
-    goto loopStart
-loopEnd:
-
-    return 
-.end method
---}
