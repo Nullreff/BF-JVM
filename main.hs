@@ -32,10 +32,10 @@ evalStack stack = (evalState stack) []
 main = do
     args <- getArgs 
     let inputName = head args
-        name = dropExtension inputName
-        outputName = name ++ ".j"
     inputData <- readFile inputName
-    let outputData = generateTemplate name $ parseBF inputData
+    let name = dropExtension inputName
+        outputName = name ++ ".j"
+        outputData = generateTemplate name $ parseBF inputData
     writeFile outputName outputData
 
 parseBF :: String -> String
