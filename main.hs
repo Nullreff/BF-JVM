@@ -7,7 +7,7 @@ import Data.Maybe
 
 data BFToken = BFMove Int
              | BFInc Int
-             | BFOut
+             | BFOut 
              | BFIn
              | BFLoopStart
              | BFLoopEnd
@@ -22,16 +22,16 @@ push :: State LabelStack String
 push = State $ inc
     where 
         inc (x:xs) = (show (x + 1), (x + 1):x:xs)
-        inc [] = (show 0, [0])
+        inc []     = (show 0, [0])
 
 evalStack :: State LabelStack [String] -> [String]
 evalStack stack = (evalState stack) []
 
 main = do
     args <- getArgs 
-    let inputName = head args
-    inputData <- readFile inputName
-    let name = dropExtension inputName
+    let inputName  = head args
+    inputData      <- readFile inputName
+    let name       = dropExtension inputName
         outputName = name ++ ".j"
         outputData = generateTemplate name $ parseBF inputData
     writeFile outputName outputData
@@ -40,19 +40,21 @@ parseBF :: String -> String
 parseBF input = 
     let rawTokens = catMaybes $ map getBFToken input
         optTokens = optimizeTokens rawTokens
-        code   = evalStack $ mapM tokenToCode optTokens
+        code      = evalStack $ mapM tokenToCode optTokens
     in unlines code 
 
 optimizeTokens :: [BFToken] -> [BFToken]
-optimizeTokens []       = []
-optimizeTokens (x:[])   = [x]
+optimizeTokens []                         = []
+optimizeTokens (x:[])                     = [x]
 optimizeTokens ((BFMove x):(BFMove y):xs) = optimizeTokens $ ((BFMove (x + y)):xs)
-optimizeTokens ((BFInc x):(BFInc y):xs) = optimizeTokens $ ((BFInc (x + y)):xs)
-optimizeTokens (x:xs) = (x:(optimizeTokens xs))
+optimizeTokens ((BFInc x):(BFInc y):xs)   = optimizeTokens $ ((BFInc (x + y)):xs)
+optimizeTokens (x:xs)                     = (x:(optimizeTokens xs))
 
 tokenToCode :: BFToken -> State LabelStack String
-tokenToCode (BFMove c)    = return $ "iinc 1 " ++ (show c) ++ "\n"
-tokenToCode (BFInc c)     = return $ unlines
+tokenToCode (BFMove c) = return $ unlines
+    [ "iinc 1 " ++ (show c)
+    ]
+tokenToCode (BFInc c) = return $ unlines
     [ "aload_2"
     , "iload_1"
     , "dup2"
@@ -61,7 +63,7 @@ tokenToCode (BFInc c)     = return $ unlines
     , "iadd"
     , "iastore "
     ]
-tokenToCode BFOut       = return $ unlines
+tokenToCode BFOut = return $ unlines
     [ "getstatic java/lang/System/out Ljava/io/PrintStream;"
     , "aload_2"
     , "iload_1"
@@ -69,7 +71,7 @@ tokenToCode BFOut       = return $ unlines
     , "i2c"
     , "invokevirtual java/io/PrintStream/print(C)V"
     ]
-tokenToCode BFIn        = return $ unlines
+tokenToCode BFIn = return $ unlines
     [ "aload_2"
     , "iload_1"
     , "getstatic java/lang/System/in Ljava/io/InputStream;"
@@ -85,7 +87,7 @@ tokenToCode BFLoopStart = do
         , "iaload"
         , "ifeq loop" ++ current ++ "End"
         ]
-tokenToCode BFLoopEnd   = do
+tokenToCode BFLoopEnd = do
     current <- pop
     return $ unlines
         [ "goto loop" ++ current ++ "Start"
