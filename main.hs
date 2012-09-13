@@ -45,10 +45,9 @@ parseBF input =
 
 optimizeTokens :: [BFToken] -> [BFToken]
 optimizeTokens []                         = []
-optimizeTokens (x:[])                     = [x]
-optimizeTokens ((BFMove x):(BFMove y):xs) = optimizeTokens $ ((BFMove (x + y)):xs)
-optimizeTokens ((BFInc x):(BFInc y):xs)   = optimizeTokens $ ((BFInc (x + y)):xs)
-optimizeTokens (x:xs)                     = (x:(optimizeTokens xs))
+optimizeTokens ((BFMove x):(BFMove y):xs) = optimizeTokens $ BFMove (x + y) : xs
+optimizeTokens ((BFInc x):(BFInc y):xs)   = optimizeTokens $ BFInc (x + y) : xs
+optimizeTokens (x:xs)                     = x : (optimizeTokens xs)
 
 tokenToCode :: BFToken -> State LabelStack String
 tokenToCode (BFMove c) = return $ unlines
