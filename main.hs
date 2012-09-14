@@ -2,6 +2,7 @@ import Control.Monad.State
 import System.Environment
 import System.FilePath
 import System.IO
+import System.Cmd
 import Data.List
 import Data.Maybe
 
@@ -35,6 +36,7 @@ main = do
         outputName = name ++ ".j"
         outputData = generateTemplate name $ parseBF inputData
     writeFile outputName outputData
+    rawSystem "jasmin" [ outputName ]
 
 parseBF :: String -> String
 parseBF input = 
@@ -51,45 +53,45 @@ optimizeTokens (x:xs)                     = x : (optimizeTokens xs)
 
 tokenToCode :: BFToken -> State LabelStack String
 tokenToCode (BFMove c) = return $ unlines
-    [ "iinc 1 " ++ (show c)
+    [ "    iinc 1 " ++ (show c)
     ]
 tokenToCode (BFInc c) = return $ unlines
-    [ "aload_2"
-    , "iload_1"
-    , "dup2"
-    , "iaload"
-    , "bipush " ++ (show c)
-    , "iadd"
-    , "iastore "
+    [ "    aload_2"
+    , "    iload_1"
+    , "    dup2"
+    , "    iaload"
+    , "    bipush " ++ (show c)
+    , "    iadd"
+    , "    iastore "
     ]
 tokenToCode BFOut = return $ unlines
-    [ "getstatic java/lang/System/out Ljava/io/PrintStream;"
-    , "aload_2"
-    , "iload_1"
-    , "iaload"
-    , "i2c"
-    , "invokevirtual java/io/PrintStream/print(C)V"
+    [ "    getstatic java/lang/System/out Ljava/io/PrintStream;"
+    , "    aload_2"
+    , "    iload_1"
+    , "    iaload"
+    , "    i2c"
+    , "    invokevirtual java/io/PrintStream/print(C)V"
     ]
 tokenToCode BFIn = return $ unlines
-    [ "aload_2"
-    , "iload_1"
-    , "getstatic java/lang/System/in Ljava/io/InputStream;"
-    , "invokevirtual java/io/InputStream/read()I"
-    , "iastore "
+    [ "    aload_2"
+    , "    iload_1"
+    , "    getstatic java/lang/System/in Ljava/io/InputStream;"
+    , "    invokevirtual java/io/InputStream/read()I"
+    , "    iastore "
     ]
 tokenToCode BFLoopStart = do
     current <- push
     return $ unlines
         [ "loop" ++ current ++ "Start:"
-        , "aload_2"
-        , "iload_1"
-        , "iaload"
-        , "ifeq loop" ++ current ++ "End"
+        , "    aload_2"
+        , "    iload_1"
+        , "    iaload"
+        , "    ifeq loop" ++ current ++ "End"
         ]
 tokenToCode BFLoopEnd = do
     current <- pop
     return $ unlines
-        [ "goto loop" ++ current ++ "Start"
+        [ "    goto loop" ++ current ++ "Start"
         , "loop" ++ current ++ "End:"
         ]
 
@@ -129,7 +131,6 @@ generateTemplate name body = unlines
     , "    astore_2"
     , "" 
     , body
-    , ""
     , "    return "
     , ".end method"
     ]
