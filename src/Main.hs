@@ -24,10 +24,10 @@ data JVMToken = JVM_iconst Int
 type LabelStack = [Int] 
 
 pop :: State LabelStack String 
-pop = State $ \(x:xs) -> (show x, xs)
+pop = state $ \(x:xs) -> (show x, xs)
 
 push :: State LabelStack String 
-push = State $ inc
+push = state $ inc
     where 
         inc (x:xs) = (show (x + 1), (x + 1):x:xs)
         inc []     = (show 0, [0])
