@@ -14,6 +14,13 @@ data BFToken = BFMove Int
              | BFLoopEnd
              deriving (Show)
 
+data JVMType = JVM_int
+
+data JVMToken = JVM_iconst Int 
+              | JVM_istore Int
+              | JVM_bipush Int
+              | JVM_newarray JVMType
+
 type LabelStack = [Int] 
 
 pop :: State LabelStack String 
