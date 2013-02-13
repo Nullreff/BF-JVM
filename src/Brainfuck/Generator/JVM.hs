@@ -21,10 +21,15 @@ tokensToJVMCode = unlines . evalStack . (mapM tokenToCode)
 
 tokenToCode :: BFToken -> State LabelStack String
 tokenToCode (BFMove c) = return $ unlines
-    [ "    iinc 1 " ++ (show c)
+    [ "    ; " ++ tokenComment
+    , "    iinc 1 " ++ (show c)
     ]
+    where
+        tokenComment = replicate (abs c) (if c > 0 then '>' else '<')
+
 tokenToCode (BFInc c) = return $ unlines
-    [ "    aload_2"
+    [ "    ; " ++ tokenComment
+    , "    aload_2"
     , "    iload_1"
     , "    dup2"
     , "    iaload"
@@ -32,8 +37,12 @@ tokenToCode (BFInc c) = return $ unlines
     , "    iadd"
     , "    iastore "
     ]
+    where
+        tokenComment = replicate (abs c) (if c > 0 then '+' else '-')
+
 tokenToCode BFOut = return $ unlines
-    [ "    getstatic java/lang/System/out Ljava/io/PrintStream;"
+    [ "    ; ."
+    , "    getstatic java/lang/System/out Ljava/io/PrintStream;"
     , "    aload_2"
     , "    iload_1"
     , "    iaload"
@@ -41,7 +50,8 @@ tokenToCode BFOut = return $ unlines
     , "    invokevirtual java/io/PrintStream/print(C)V"
     ]
 tokenToCode BFIn = return $ unlines
-    [ "    aload_2"
+    [ "    ; ,"
+    , "    aload_2"
     , "    iload_1"
     , "    getstatic java/lang/System/in Ljava/io/InputStream;"
     , "    invokevirtual java/io/InputStream/read()I"
@@ -50,7 +60,8 @@ tokenToCode BFIn = return $ unlines
 tokenToCode BFLoopStart = do
     current <- push
     return $ unlines
-        [ "loop" ++ current ++ "Start:"
+        [ "    ; ["
+        , "loop" ++ current ++ "Start:"
         , "    aload_2"
         , "    iload_1"
         , "    iaload"
@@ -59,7 +70,8 @@ tokenToCode BFLoopStart = do
 tokenToCode BFLoopEnd = do
     current <- pop
     return $ unlines
-        [ "    goto loop" ++ current ++ "Start"
+        [ "    ; ]"
+        , "    goto loop" ++ current ++ "Start"
         , "loop" ++ current ++ "End:"
         ]
 
